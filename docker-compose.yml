@@ -1,0 +1,115 @@
+version: "3.9"
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tms_app
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    environment:
+      APP_ENV: local
+      APP_KEY: base64:oClmG67mvs2Vkxa4opj4shYpSGxES+12XhxSNoVQTLU=
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: translation_service
+      DB_USERNAME: tms_user
+      DB_PASSWORD: secret
+      CACHE_STORE: redis
+      REDIS_CLIENT: phpredis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: "null"
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - tms_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: tms_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: translation_service
+      MYSQL_USER: tms_user
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root_secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_secret"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - tms_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: tms_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - tms_network
+
+  # Run the full test suite inside Docker
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tms_test
+    environment:
+      APP_ENV: testing
+      APP_KEY: base64:oClmG67mvs2Vkxa4opj4shYpSGxES+12XhxSNoVQTLU=
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: translation_service_test
+      DB_USERNAME: tms_user
+      DB_PASSWORD: secret
+      CACHE_STORE: array
+      REDIS_CLIENT: phpredis
+      REDIS_HOST: redis
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+    entrypoint: >
+      sh -c "composer install --no-interaction --quiet &&
+             php artisan migrate --force &&
+             php artisan test"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - tms_network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  tms_network:
+    driver: bridge
