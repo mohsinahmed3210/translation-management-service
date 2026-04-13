@@ -2,7 +2,7 @@
 set -e
 
 echo "==> Installing/verifying composer dependencies..."
-php -d memory_limit=-1 /usr/bin/composer install --optimize-autoloader --no-interaction --quiet
+php -d memory_limit=-1 /usr/bin/composer update --optimize-autoloader --no-interaction --quiet
 
 echo "==> Ensuring storage directories exist..."
 mkdir -p storage/framework/sessions \
@@ -29,6 +29,9 @@ php artisan db:seed --class=TagSeeder --force
 echo "==> Caching config and routes..."
 php artisan config:cache
 php artisan route:cache
+
+echo "==> Generating Swagger documentation..."
+php artisan l5-swagger:generate
 
 echo "==> Starting services..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
