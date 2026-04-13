@@ -1,6 +1,6 @@
 FROM php:8.2-fpm-alpine
 
-# Install system dependencies
+# Install system dependencies + build tools needed for PECL extensions
 RUN apk add --no-cache \
         nginx \
         supervisor \
@@ -11,7 +11,10 @@ RUN apk add --no-cache \
         libpng-dev \
         libzip-dev \
         oniguruma-dev \
-        icu-dev
+        icu-dev \
+        autoconf \
+        g++ \
+        make
 
 # Install PHP extensions
 RUN docker-php-ext-install \
@@ -22,9 +25,10 @@ RUN docker-php-ext-install \
         opcache \
         intl
 
-# Install phpredis extension via PECL so REDIS_CLIENT=phpredis works in production.
-# The docker-compose env explicitly sets REDIS_CLIENT=phpredis to use this.
-RUN pecl install redis && docker-php-ext-enable redis
+# Install phpredis via PECL (requires autoconf/g++/make above)
+RUN pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del autoconf g++ make
 
 # PHP configuration
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
