@@ -2,7 +2,7 @@
 set -e
 
 echo "==> Installing/verifying composer dependencies..."
-composer install --no-dev --optimize-autoloader --no-interaction --quiet
+composer install --optimize-autoloader --no-interaction --quiet
 
 echo "==> Ensuring storage directories exist..."
 mkdir -p storage/framework/sessions \
