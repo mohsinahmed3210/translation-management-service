@@ -2,7 +2,7 @@
 set -e
 
 echo "==> Installing/verifying composer dependencies..."
-composer install --optimize-autoloader --no-interaction --quiet
+php -d memory_limit=-1 /usr/bin/composer install --optimize-autoloader --no-interaction --quiet
 
 echo "==> Ensuring storage directories exist..."
 mkdir -p storage/framework/sessions \
