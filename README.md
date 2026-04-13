@@ -42,7 +42,7 @@ docker-compose exec app php artisan translations:seed --count=100000
 docker-compose exec app php artisan l5-swagger:generate
 
 # API is now available at http://localhost:8000
-# Swagger UI at http://localhost:8000/  
+# Swagger UI at http://localhost:8000/api/documentation
 ```
 
 ---
