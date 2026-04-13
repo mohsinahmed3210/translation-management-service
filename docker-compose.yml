@@ -95,7 +95,7 @@ services:
       SESSION_DRIVER: array
       QUEUE_CONNECTION: sync
     entrypoint: >
-      sh -c "composer install --no-interaction --quiet &&
+      sh -c "composer update --no-interaction --quiet &&
              php artisan migrate --force &&
              php artisan test"
     depends_on:

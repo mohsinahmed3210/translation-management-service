@@ -51,9 +51,17 @@ WORKDIR /var/www/html
 
 COPY . .
 
-RUN php -d memory_limit=-1 /usr/bin/composer install --optimize-autoloader --no-interaction
+RUN php -d memory_limit=-1 /usr/bin/composer update --optimize-autoloader --no-interaction
 
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+# Publish Swagger UI assets (uses a temporary .env so artisan can boot)
+RUN cp .env.example .env \
+    && php artisan key:generate \
+    && php artisan vendor:publish --provider "L5Swagger\L5SwaggerServiceProvider" --force \
+    && rm .env
+
+# Fix ownership: give www-data full access to the whole app
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 80
